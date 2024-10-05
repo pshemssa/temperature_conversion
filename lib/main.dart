@@ -1,47 +1,54 @@
 import 'package:flutter/material.dart';
 
-void main() => runApp(TemperatureConverterApp());
+void main() {
+  runApp(const TempConversionApp());
+}
 
-class TemperatureConverterApp extends StatelessWidget {
+class TempConversionApp extends StatelessWidget {
+  const TempConversionApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Temperature Converter',
+      title: 'Temperature Conversion',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: TemperatureConverter(),
+      home: const TempConversionHomePage(),
     );
   }
 }
 
-class TemperatureConverter extends StatefulWidget {
+class TempConversionHomePage extends StatefulWidget {
+  const TempConversionHomePage({super.key});
+
   @override
-  _TemperatureConverterState createState() => _TemperatureConverterState();
+  // ignore: library_private_types_in_public_api
+  _TempConversionHomePageState createState() => _TempConversionHomePageState();
 }
 
-class _TemperatureConverterState extends State<TemperatureConverter> {
-  final TextEditingController _controller = TextEditingController();
-  String _convertedValue = '';
-  String _selectedConversion = 'FtoC';
-  List<String> _conversionHistory = [];
+class _TempConversionHomePageState extends State<TempConversionHomePage> {
+  bool isFahrenheitToCelsius = true;
+  TextEditingController inputController = TextEditingController();
+  String result = '';
+  List<String> history = [];
 
-  void _convertTemperature() {
-    double userTemp = double.tryParse(_controller.text) ?? 0;
-    double convertedTemp;
+  void convertTemperature() {
+    double input = double.tryParse(inputController.text) ?? 0.0;
+    double output;
+    String conversion;
 
-    if (_selectedConversion == 'FtoC') {
-      convertedTemp = (userTemp - 32) * 5 / 9;
+    if (isFahrenheitToCelsius) {
+      output = (input - 32) * 5 / 9;
+      conversion = 'F to C: $input => ${output.toStringAsFixed(2)}';
     } else {
-      convertedTemp = (userTemp * 9 / 5) + 32;
+      output = (input * 9 / 5) + 32;
+      conversion = 'C to F: $input => ${output.toStringAsFixed(2)}';
     }
 
     setState(() {
-      _convertedValue = convertedTemp.toStringAsFixed(1);
-      _conversionHistory.insert(
-        0,
-        '${_selectedConversion == 'FtoC' ? 'F to C' : 'C to F'}: $userTemp ➡ ${_convertedValue}',
-      );
+      result = output.toStringAsFixed(2);
+      history.insert(0, conversion);
     });
   }
 
@@ -50,100 +57,90 @@ class _TemperatureConverterState extends State<TemperatureConverter> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Converter'),
-        backgroundColor: Colors.blueAccent,
+        backgroundColor: Colors.blueAccent ,
       ),
-      body: Container(
-        decoration: const BoxDecoration(
-            color:Colors.grey // Change this color as needed
-        ),
-
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            const Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                'Conversion:',
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+      body: OrientationBuilder(
+        builder: (context, orientation) {
+          return Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Colors.lightBlue,
+                  Colors.black,
+                ],
               ),
             ),
-            Row(
-              children: [
-                Expanded(
-                  child: ListTile(
-                    title:  const Text('Fahrenheit to Celsius'),
-                    leading: Radio(
-                      value: 'FtoC',
-                      groupValue: _selectedConversion,
-                      onChanged: (String? value) {
-                        setState(() {
-                          _selectedConversion = value!;
-                        });
-                      },
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: ListTile(
-                    title: const Text('Celsius to Fahrenheit'),
-                    leading: Radio(
-                      value: 'CtoF',
-                      groupValue: _selectedConversion,
-                      onChanged: (String? value) {
-                        setState(() {
-                          _selectedConversion = value!;
-                        });
-                      },
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _controller,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      hintText: 'Enter temperature',
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                const Text(
-                  '=',
-                  style: TextStyle(fontSize: 24),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              children: <Widget>[
+                const Align(
+                  alignment: Alignment.centerLeft,
                   child: Text(
-                    _convertedValue,
-                    style: const TextStyle(fontSize: 24),
+                    'Conversion:',
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: <Widget>[
+                    Radio<bool>(
+                      value: true,
+                      groupValue: isFahrenheitToCelsius,
+                      onChanged: (value) {
+                        setState(() {
+                          isFahrenheitToCelsius = value!;
+                        });
+                      },
+                    ),
+                    const Text('Fahrenheit to Celsius'),
+                    Radio<bool>(
+                      value: false,
+                      groupValue: isFahrenheitToCelsius,
+                      onChanged: (value) {
+                        setState(() {
+                          isFahrenheitToCelsius = value!;
+                        });
+                      },
+                    ),
+                    const Text('Celsius to Fahrenheit'),
+                  ],
+                ),
+
+                TextField(
+                  controller: inputController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Enter temperature',
+                  ),
+                ),
+
+
+                const SizedBox(height: 16.0),
+                ElevatedButton(
+                  onPressed: convertTemperature,
+                  child: const Text('Convert'),
+                ),
+
+                const SizedBox(height: 16.0),
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: history.length,
+                    itemBuilder: (context, index) {
+                      return ListTile(
+                        title: Text(
+                          history[index],
+                          style: const TextStyle(color: Colors.black),
+                        ),
+                      );
+                    },
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _convertTemperature,
-              child: const Text('CONVERT'),
-
-            ),
-
-            Expanded(
-              child: ListView.builder(
-                itemCount: _conversionHistory.length,
-                itemBuilder: (context, index) {
-                  return ListTile(
-                    title: Text(_conversionHistory[index]),
-
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
